@@ -136,24 +136,12 @@ class _CaptureSignBoardState extends State<CaptureSignBoard>
         child: Column(
           children: <Widget>[
             Expanded(
-              child: Container(
-                decoration: BoxDecoration(
-                  color: Colors.black,
-                  border: Border.all(
-                    color:
-                        controller != null && controller!.value.isRecordingVideo
-                            ? Colors.redAccent
-                            : Colors.grey,
-                    width: 3.0,
-                  ),
-                ),
-                child: Padding(
+              child: Padding(
                   padding: const EdgeInsets.all(1.0),
                   child: Center(
                     child: _cameraPreviewWidget(),
                   ),
                 ),
-              ),
             ),
             _captureControlRowWidget(),
             _modeControlRowWidget(),
