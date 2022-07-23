@@ -11,8 +11,10 @@ import 'package:camera/camera.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
-
-// TODO: Automatically select the back camera.
+import 'package:go_router/go_router.dart';
+import 'package:gofuntime/logging/logging.dart';
+import 'package:gofuntime/main.dart';
+import 'package:google_mlkit_text_recognition/google_mlkit_text_recognition.dart';
 
 /// Capture a sign board
 class CaptureSignBoard extends StatefulWidget {
@@ -37,21 +39,13 @@ IconData getCameraLensIcon(CameraLensDirection direction) {
       return Icons.camera_front;
     case CameraLensDirection.external:
       return Icons.camera;
-    default:
-      throw ArgumentError('Unknown lens direction');
-  }
-}
-
-void _logError(String code, String? message) {
-  if (message != null) {
-    print('Error: $code\nError Message: $message');
-  } else {
-    print('Error: $code');
   }
 }
 
 class _CaptureSignBoardState extends State<CaptureSignBoard>
     with WidgetsBindingObserver, TickerProviderStateMixin {
+  static final _logger = Logger.tag('camera');
+
   CameraController? controller;
   XFile? imageFile;
   bool enableAudio = true;
@@ -71,6 +65,8 @@ class _CaptureSignBoardState extends State<CaptureSignBoard>
 
   // Counting pointers (number of user fingers on screen)
   int _pointers = 0;
+
+  late final TextRecognizer _textRecognizer;
 
   @override
   void initState() {
@@ -101,6 +97,14 @@ class _CaptureSignBoardState extends State<CaptureSignBoard>
       parent: _focusModeControlRowAnimationController,
       curve: Curves.easeInCubic,
     );
+
+    // Find the first back camera.
+    final cameraDescription = widget._cameras.firstWhere((currDescription) =>
+        currDescription.lensDirection == CameraLensDirection.back);
+    onNewCameraSelected(cameraDescription)
+        .then((_) => {_logger.info('Camera $cameraDescription selected.')});
+
+    _textRecognizer = TextRecognizer();
   }
 
   @override
@@ -108,6 +112,7 @@ class _CaptureSignBoardState extends State<CaptureSignBoard>
     WidgetsBinding.instance.removeObserver(this);
     _flashModeControlRowAnimationController.dispose();
     _exposureModeControlRowAnimationController.dispose();
+    _textRecognizer.close().ignore();
     super.dispose();
   }
 
@@ -137,11 +142,11 @@ class _CaptureSignBoardState extends State<CaptureSignBoard>
           children: <Widget>[
             Expanded(
               child: Padding(
-                  padding: const EdgeInsets.all(1.0),
-                  child: Center(
-                    child: _cameraPreviewWidget(),
-                  ),
+                padding: const EdgeInsets.all(1.0),
+                child: Center(
+                  child: _cameraPreviewWidget(),
                 ),
+              ),
             ),
             _captureControlRowWidget(),
             _modeControlRowWidget(),
@@ -213,6 +218,8 @@ class _CaptureSignBoardState extends State<CaptureSignBoard>
 
   /// Display the thumbnail of the captured image or video.
   Widget _thumbnailWidget() {
+    final imageFile = this.imageFile;
+
     return Expanded(
       child: Align(
         alignment: Alignment.centerRight,
@@ -222,7 +229,9 @@ class _CaptureSignBoardState extends State<CaptureSignBoard>
             if (imageFile == null)
               Container()
             else
-              SizedBox(
+              GestureDetector(
+                onTapUp: (_) => context.goNamed('select-elements'),
+                child: SizedBox(
                   width: 64.0,
                   height: 64.0,
                   child:
@@ -230,7 +239,11 @@ class _CaptureSignBoardState extends State<CaptureSignBoard>
                       // pointing to a location within the browser. It may be displayed
                       // either with Image.network or Image.memory after loading the image
                       // bytes to memory.
-                      Image.file(File(imageFile!.path))),
+                      Image.file(
+                    File(imageFile.path),
+                  ),
+                ),
+              ),
           ],
         ),
       ),
@@ -652,14 +665,24 @@ class _CaptureSignBoardState extends State<CaptureSignBoard>
   }
 
   void onTakePictureButtonPressed() {
-    takePicture().then((XFile? file) {
+    takePicture().then((XFile? file) async {
+      if (file == null) {
+        return;
+      }
+
+      final textRecognizerImg = InputImage.fromFile(File(file.path));
+      final texts = await _textRecognizer.processImage(textRecognizerImg);
+
+      _logger.info('Recognized: $texts');
+
       if (mounted) {
+        // feed image to global app state.
+        currentImageFile = file;
+
         setState(() {
           imageFile = file;
         });
-        if (file != null) {
-          showInSnackBar('Picture saved to ${file.path}');
-        }
+        showInSnackBar('Picture saved to ${file.path}');
       }
     });
   }
@@ -880,9 +903,9 @@ class _CaptureSignBoardState extends State<CaptureSignBoard>
   }
 
   Future<XFile?> takePicture() async {
-    final CameraController? cameraController = controller;
+    final cameraController = controller;
     if (cameraController == null || !cameraController.value.isInitialized) {
-      showInSnackBar('Error: select a camera first.');
+      showInSnackBar('Select a camera first.');
       return null;
     }
 
@@ -901,7 +924,7 @@ class _CaptureSignBoardState extends State<CaptureSignBoard>
   }
 
   void _showCameraException(CameraException e) {
-    _logError(e.code, e.description);
+    _logger.warn('Camera Issue: ${e.code} - ${e.description}');
     showInSnackBar('Error: ${e.code}\n${e.description}');
   }
 }

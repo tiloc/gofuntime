@@ -13,11 +13,11 @@ class Logger {
   late final logging.Logger loggingLogger;
 
   factory Logger(Type name) {
-    return Logger._('fdash.$name');
+    return Logger._('gofuntime.$name');
   }
 
   factory Logger.tag(String tag) {
-    return Logger._('fdash.$tag');
+    return Logger._('gofuntime.$tag');
   }
 
   Logger._(this.name) : loggingLogger = logging.Logger(name);

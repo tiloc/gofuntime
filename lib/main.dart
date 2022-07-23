@@ -3,13 +3,14 @@ import 'package:dynamic_color/dynamic_color.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:gofuntime/ui/capture_sign_board.dart';
+import 'package:gofuntime/ui/element_selector.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 List<CameraDescription> cameras = <CameraDescription>[];
+XFile? currentImageFile;
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  // TODO: This is shitty. Camera View should be self-contained.
   cameras = await availableCameras();
 
   runApp(const FuntimeApp());
@@ -20,7 +21,16 @@ final _router = GoRouter(
     GoRoute(
       path: '/',
       name: 'home',
-      builder: (context, state) => CaptureSignBoard(cameras: cameras,),
+      builder: (context, state) => CaptureSignBoard(
+        cameras: cameras,
+      ),
+    ),
+    GoRoute(
+      path: '/select-elements',
+      name: 'select-elements',
+      builder: (context, state) => ElementSelector(
+        imageFile: currentImageFile!, // TODO: She-bang op = a cat dies!
+      ),
     ),
   ],
 );
@@ -38,11 +48,15 @@ class FuntimeApp extends StatelessWidget {
           theme: ThemeData(
             colorScheme: lightColorScheme,
             useMaterial3: true,
-          ).copyWith(textTheme: GoogleFonts.indieFlowerTextTheme(),),
+          ).copyWith(
+            textTheme: GoogleFonts.indieFlowerTextTheme(),
+          ),
           darkTheme: ThemeData(
             colorScheme: darkColorScheme,
             useMaterial3: true,
-          ).copyWith(textTheme: GoogleFonts.indieFlowerTextTheme(),),
+          ).copyWith(
+            textTheme: GoogleFonts.indieFlowerTextTheme(),
+          ),
           routeInformationProvider: _router.routeInformationProvider,
           routeInformationParser: _router.routeInformationParser,
           routerDelegate: _router.routerDelegate,

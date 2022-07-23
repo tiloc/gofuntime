@@ -36,6 +36,8 @@ dependencies:
 
   google_fonts: ^3.0.1
 
+  google_mlkit_text_recognition:
+
   go_router: ^4.1.0
 
 dev_dependencies:
