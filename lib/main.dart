@@ -5,9 +5,11 @@ import 'package:go_router/go_router.dart';
 import 'package:gofuntime/ui/capture_sign_board.dart';
 import 'package:gofuntime/ui/element_selector.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:google_mlkit_text_recognition/google_mlkit_text_recognition.dart';
 
 List<CameraDescription> cameras = <CameraDescription>[];
 XFile? currentImageFile;
+RecognizedText? recognizedText;
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -29,7 +31,8 @@ final _router = GoRouter(
       path: '/select-elements',
       name: 'select-elements',
       builder: (context, state) => ElementSelector(
-        imageFile: currentImageFile!, // TODO: She-bang op = a cat dies!
+        imageFile: currentImageFile!,
+        recognizedText: recognizedText!,// TODO: She-bang op = a cat dies!
       ),
     ),
   ],

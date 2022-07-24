@@ -230,7 +230,7 @@ class _CaptureSignBoardState extends State<CaptureSignBoard>
               Container()
             else
               GestureDetector(
-                onTapUp: (_) => context.goNamed('select-elements'),
+                onTapUp: (_) => context.pushNamed('select-elements'),
                 child: SizedBox(
                   width: 64.0,
                   height: 64.0,
@@ -504,15 +504,6 @@ class _CaptureSignBoardState extends State<CaptureSignBoard>
                   ? onTakePictureButtonPressed
                   : null,
         ),
-        IconButton(
-          icon: const Icon(Icons.pause_presentation),
-          color:
-              cameraController != null && cameraController.value.isPreviewPaused
-                  ? Colors.red
-                  : Colors.blue,
-          onPressed:
-              cameraController == null ? null : onPausePreviewButtonPressed,
-        ),
       ],
     );
   }
@@ -592,8 +583,8 @@ class _CaptureSignBoardState extends State<CaptureSignBoard>
 
     final CameraController cameraController = CameraController(
       cameraDescription,
-      kIsWeb ? ResolutionPreset.max : ResolutionPreset.medium,
-      enableAudio: enableAudio,
+      ResolutionPreset.max,
+      enableAudio: false,
       imageFormatGroup: ImageFormatGroup.jpeg,
     );
 
@@ -672,12 +663,14 @@ class _CaptureSignBoardState extends State<CaptureSignBoard>
 
       final textRecognizerImg = InputImage.fromFile(File(file.path));
       final texts = await _textRecognizer.processImage(textRecognizerImg);
-
       _logger.info('Recognized: $texts');
+
+      // TODO: Anything better than global variables?
+      currentImageFile = file;
+      recognizedText = texts;
 
       if (mounted) {
         // feed image to global app state.
-        currentImageFile = file;
 
         setState(() {
           imageFile = file;
@@ -744,108 +737,6 @@ class _CaptureSignBoardState extends State<CaptureSignBoard>
     });
   }
 
-  Future<void> onPausePreviewButtonPressed() async {
-    final CameraController? cameraController = controller;
-
-    if (cameraController == null || !cameraController.value.isInitialized) {
-      showInSnackBar('Error: select a camera first.');
-      return;
-    }
-
-    if (cameraController.value.isPreviewPaused) {
-      await cameraController.resumePreview();
-    } else {
-      await cameraController.pausePreview();
-    }
-
-    if (mounted) {
-      setState(() {});
-    }
-  }
-
-  void onPauseButtonPressed() {
-    pauseVideoRecording().then((_) {
-      if (mounted) {
-        setState(() {});
-      }
-      showInSnackBar('Video recording paused');
-    });
-  }
-
-  void onResumeButtonPressed() {
-    resumeVideoRecording().then((_) {
-      if (mounted) {
-        setState(() {});
-      }
-      showInSnackBar('Video recording resumed');
-    });
-  }
-
-  Future<void> startVideoRecording() async {
-    final CameraController? cameraController = controller;
-
-    if (cameraController == null || !cameraController.value.isInitialized) {
-      showInSnackBar('Error: select a camera first.');
-      return;
-    }
-
-    if (cameraController.value.isRecordingVideo) {
-      // A recording is already started, do nothing.
-      return;
-    }
-
-    try {
-      await cameraController.startVideoRecording();
-    } on CameraException catch (e) {
-      _showCameraException(e);
-      return;
-    }
-  }
-
-  Future<XFile?> stopVideoRecording() async {
-    final CameraController? cameraController = controller;
-
-    if (cameraController == null || !cameraController.value.isRecordingVideo) {
-      return null;
-    }
-
-    try {
-      return cameraController.stopVideoRecording();
-    } on CameraException catch (e) {
-      _showCameraException(e);
-      return null;
-    }
-  }
-
-  Future<void> pauseVideoRecording() async {
-    final CameraController? cameraController = controller;
-
-    if (cameraController == null || !cameraController.value.isRecordingVideo) {
-      return;
-    }
-
-    try {
-      await cameraController.pauseVideoRecording();
-    } on CameraException catch (e) {
-      _showCameraException(e);
-      rethrow;
-    }
-  }
-
-  Future<void> resumeVideoRecording() async {
-    final CameraController? cameraController = controller;
-
-    if (cameraController == null || !cameraController.value.isRecordingVideo) {
-      return;
-    }
-
-    try {
-      await cameraController.resumeVideoRecording();
-    } on CameraException catch (e) {
-      _showCameraException(e);
-      rethrow;
-    }
-  }
 
   Future<void> setFlashMode(FlashMode mode) async {
     if (controller == null) {
