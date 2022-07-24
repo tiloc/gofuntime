@@ -1,5 +1,5 @@
 name: gofuntime
-description: Go Funtime Now!
+description: Go Funtime!
 
 # The following line prevents the package from being accidentally published to
 # pub.dev using `flutter pub publish`. This is preferred for private packages.
@@ -30,6 +30,8 @@ dependencies:
   flutter:
     sdk: flutter
 
+  add_2_calendar:
+
   camera: ^0.10.0
 
   dynamic_color: ^1.4.0
@@ -37,8 +39,11 @@ dependencies:
   google_fonts: ^3.0.1
 
   google_mlkit_text_recognition:
+  google_mlkit_entity_extraction:
 
   go_router: ^4.1.0
+
+  intl:
 
 dev_dependencies:
   flutter_test:

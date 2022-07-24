@@ -230,7 +230,7 @@ class _CaptureSignBoardState extends State<CaptureSignBoard>
               Container()
             else
               GestureDetector(
-                onTapUp: (_) => context.pushNamed('select-elements'),
+                onTapUp: (_) => context.pushNamed('select-elements'), // TODO: disable camera
                 child: SizedBox(
                   width: 64.0,
                   height: 64.0,
