@@ -219,8 +219,8 @@ class _ElementSelectorState extends State<ElementSelector> {
             ),
           ButtonBar(
             children: [
-              ElevatedButton(  // TODO: criteria for enablement
-                  onPressed: () {
+              ElevatedButton(
+                  onPressed: (beginDateTime != null) ? () {
                     final event = _buildEvent(
                         title: titleController.text,
                         description: descriptionController.text,
@@ -229,7 +229,7 @@ class _ElementSelectorState extends State<ElementSelector> {
                         endDateTime: endDateTime ?? beginDateTime!);
 
                     Add2Calendar.addEvent2Cal(event);
-                  },
+                  } : null,
                   child: const Text('Create Event'))
             ],
           )
